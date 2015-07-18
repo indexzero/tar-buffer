@@ -1,0 +1,36 @@
+{
+  "name": "tar-buffer",
+  "version": "0.0.0",
+  "description": "Buffers entries from a tar.Parse() stream into memory",
+  "main": "tar-buffer.js",
+  "scripts": {
+    "pretest": "stylezero *.js",
+    "test": "istanbul cover ./node_modules/.bin/_mocha test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/indexzero/tar-buffer"
+  },
+  "keywords": [
+    "tar",
+    "buffer",
+    "stream"
+  ],
+  "author": "Charlie Robbins <charlie.robbins@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/indexzero/tar-buffer/issues"
+  },
+  "homepage": "https://github.com/indexzero/tar-buffer",
+  "dependencies": {
+    "concat-stream": "~1.5.0"
+  },
+  "devDependencies": {
+    "istanbul": "~0.3.17",
+    "minimist": "~1.1.1",
+    "mocha": "~2.2.5",
+    "mocha-istanbul": "~0.2.0",
+    "stylezero": "~2.2.0",
+    "tar": "~2.1.1"
+  }
+}
