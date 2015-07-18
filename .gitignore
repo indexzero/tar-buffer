@@ -28,6 +28,6 @@ node_modules
 
 .DS_Store
 *.tgz
-!test/fixtures/npm-verify-stream-0.0.0.tgz
+!test/fixtures/tar-buffer-0.0.0.tgz
 test/output/*
 !test/output/.gitkeep
