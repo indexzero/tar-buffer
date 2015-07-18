@@ -18,13 +18,24 @@ var TarBuffer = module.exports = function TarBuffer(parser, opts) {
   //
   opts = opts || {};
   this.log = opts.log || function () {};
+  this.parser = parser;
+
+  console.dir(Object.keys(this));
+  setImmediate(this.buffer.bind(this));
+};
+
+/*
+ * function buffer ()
+ *
+ */
+TarBuffer.prototype.buffer = function () {
+  var self = this;
 
   //
   // Remark: what's the best data structure for nested files?
   //
-  var self = this;
-  self.files = {};
-  parser.on('entry', function (e) {
+  this.files = {};
+  this.parser.on('entry', function (e) {
     if (self.files[e.path]) {
       return self.log('duplicate entry', e.path);
     }
