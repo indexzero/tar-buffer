@@ -1,6 +1,7 @@
 'use strict';
 
-var path = require('path'),
+var assert = require('assert'),
+    path = require('path'),
     fs = require('fs'),
     zlib = require('zlib'),
     tar = require('tar'),
@@ -13,14 +14,54 @@ describe('tar-buffer simple', function () {
     var tarFile = path.join(fixturesDir, 'tar-buffer-0.0.0.tgz');
     var parser = tar.Parse();
     var buffer = new TarBuffer(parser);
+    var errState;
 
+    //
+    // Handle errors correctly by storing
+    // the error state in this scope
+    //
+    function onError(err) {
+      errState = err;
+    }
+
+    buffer
+      .on('error', onError)
+      .on('end', function () {
+        assert.ok(!errState);
+        assert.deepEqual(Object.keys(buffer.files), [
+          'package/package.json',
+          'package/.npmignore',
+          'package/README.md',
+          'package/LICENSE',
+          'package/tar-buffer.js',
+          'package/test/simple.test.js'
+        ]);
+
+        done();
+      });
 
     fs.createReadStream(tarFile)
       .pipe(zlib.Unzip())
-      .pipe(parser)
-      .on('end', function () {
-        console.dir(buffer.files);
+      .on('error', onError)
+      .pipe(parser);
+  });
+
+  it('should emit error on a bad tarball file', function (done) {
+    var tarFile = path.join(fixturesDir, 'not-a-tarball.tgz');
+    var parser = tar.Parse();
+    var buffer = TarBuffer(parser);
+    var ended;
+
+    buffer
+      .on('end', function () { ended = true; })
+      .on('error', function (err) {
+        assert.ok(!ended);
+        assert.equal(err.message, 'invalid tar file');
+
         done();
       });
+
+    fs.createReadStream(tarFile)
+      .pipe(parser);
   });
 });
