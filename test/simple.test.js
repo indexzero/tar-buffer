@@ -9,6 +9,21 @@ var assert = require('assert'),
 
 var fixturesDir = path.join(__dirname, 'fixtures');
 
+/*
+ * Helper function for asserting files in our tar-buffer-0.0.0.tgz
+ * test fixture.
+ */
+function assertTarBufferFiles(obj) {
+  assert.deepEqual(Object.keys(obj).sort(), [
+    'package/package.json',
+    'package/.npmignore',
+    'package/README.md',
+    'package/LICENSE',
+    'package/tar-buffer.js',
+    'package/test/simple.test.js'
+  ].sort());
+}
+
 describe('tar-buffer simple', function () {
   it('should untar and buffer a valid tar.Parse() stream', function (done) {
     var tarFile = path.join(fixturesDir, 'tar-buffer-0.0.0.tgz');
@@ -28,15 +43,7 @@ describe('tar-buffer simple', function () {
       .on('error', onError)
       .on('end', function () {
         assert.ok(!errState);
-        assert.deepEqual(Object.keys(buffer.files), [
-          'package/package.json',
-          'package/.npmignore',
-          'package/README.md',
-          'package/LICENSE',
-          'package/tar-buffer.js',
-          'package/test/simple.test.js'
-        ]);
-
+        assertTarBufferFiles(buffer.files);
         done();
       });
 
@@ -57,11 +64,46 @@ describe('tar-buffer simple', function () {
       .on('error', function (err) {
         assert.ok(!ended);
         assert.equal(err.message, 'invalid tar file');
+        done();
+      });
+
+    fs.createReadStream(tarFile)
+      .pipe(parser);
+  });
+
+  it('should allow for custom "entry" events', function (done) {
+    var tarFile = path.join(fixturesDir, 'tar-buffer-0.0.0.tgz');
+    var parser = tar.Parse();
+    var buffer = new TarBuffer(parser);
+    var props = {};
+    var errState;
+
+    //
+    // Handle errors correctly by storing
+    // the error state in this scope
+    //
+    function onError(err) {
+      errState = err;
+    }
+
+    buffer
+      .on('entry', function (e) {
+        props[e.props.path] = e.props;
+      })
+      .on('error', onError)
+      .on('end', function () {
+        assert.ok(!errState);
+        assertTarBufferFiles(props);
+        Object.keys(props).forEach(function (e) {
+          assert.ok(typeof e.path, 'string');
+        });
 
         done();
       });
 
     fs.createReadStream(tarFile)
+      .pipe(zlib.Unzip())
+      .on('error', onError)
       .pipe(parser);
   });
 });
