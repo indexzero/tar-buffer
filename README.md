@@ -17,7 +17,7 @@ var buffer = new TarBuffer(parser)
     //
     // Log all our files in memory
     //
-    console.dir(parser.files);
+    console.dir(buffer.files);
   });
 
 //
