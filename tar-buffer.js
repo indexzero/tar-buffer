@@ -19,14 +19,17 @@ var TarBuffer = module.exports = function TarBuffer(parser, opts) {
   opts = opts || {};
   this.log = opts.log || function () {};
   this.parser = parser;
+  this._buffering = 0;
 
-  console.dir(Object.keys(this));
   setImmediate(this.buffer.bind(this));
 };
 
+util.inherits(TarBuffer, events.EventEmitter);
+
 /*
  * function buffer ()
- *
+ * Begins buffering entries from the tar parse
+ * stream associated with this instance.
  */
 TarBuffer.prototype.buffer = function () {
   var self = this;
@@ -36,27 +39,39 @@ TarBuffer.prototype.buffer = function () {
   //
   this.files = {};
   this.parser.on('entry', function (e) {
-    if (self.files[e.path]) {
-      return self.log('duplicate entry', e.path);
+    self.log('entry', e.props);
+    if (!self.listeners('entry').length) {
+      self.files[e.path] = e;
     }
 
-    self.log('entry', e.props);
-    self.files[e.path] = e;
+    //
+    // Increment our count of things we are buffering
+    // so that we properly emit `end`
+    //
+    self._buffering++;
 
     //
     // Remark: will there be errors on the entry object?
     //
     e.pipe(concat({ encoding: 'string' }, function (content) {
-      self.log(e.path, content);
-      e.content = content;
+      self._buffering--;
+
+      //
+      // Do not emit "entry" events if we have already
+      // encountered an error.
+      //
+      if (!self.errState) {
+        e.content = content;
+        self.emit('entry', e);
+      }
     }));
   })
   //
   // Remark: is this the correct way to handle tar errors?
   // Or should we also emit an error ourselves?
   //
-  .on('end', this.emit.bind(this, 'end'))
-  .on('error', this.emit.bind(this, 'error'));
+  .on('end', this._end.bind(this))
+  .on('error', this._error.bind(this));
   //
   // Remark: adapted from `node-tar` examples. Leaving this sample
   // code here until their role in the `tar` format is better
@@ -85,4 +100,20 @@ TarBuffer.prototype.buffer = function () {
   // })
 };
 
-util.inherits(TarBuffer, events.EventEmitter);
+/*
+ * @private function _end ()
+ * Attempts to end if no buffers are currently in-flight.
+ */
+TarBuffer.prototype._end = function () {
+  if (this._buffering !== 0) { return; }
+  this.emit('end');
+};
+
+/*
+ * @private function _error ()
+ * Stores the errState on this instance and emits the error event
+ */
+TarBuffer.prototype._error = function (err) {
+  this.errState = err;
+  this.emit('error', err);
+};
