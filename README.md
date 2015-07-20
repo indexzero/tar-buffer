@@ -35,6 +35,15 @@ fs.createReadStream('any-tarball.tgz')
 
 - `log`: (optional) Log function to use. Expects `console.log` API.
 
+#### Events
+- `entry`: similar the `entry` events emitted by the `tar.Parse()` stream except that these entries have been fully read into memory. The contents are located on `e.content`:
+``` js
+var buffer = new TarBuffer(parser)
+  .on('entry', function (e) {
+    console.log(e.content); // Log all file contents
+  });
+```
+
 #### Why isn't this a proper stream?
 
 Underneath the covers, `tar` emits several events, not just `data` events which have to be handled seprately from a traditional stream.
