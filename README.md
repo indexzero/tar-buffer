@@ -34,6 +34,7 @@ fs.createReadStream('any-tarball.tgz')
 #### Options
 
 - `log`: (optional) Log function to use. Expects `console.log` API.
+- `ignore`: (optional) Array (or `/\r?\n/` delimted string) of ignorefile lines.
 
 #### Events
 - `entry`: similar the `entry` events emitted by the `tar.Parse()` stream except that these entries have been fully read into memory. The contents are located on `e.content`:
