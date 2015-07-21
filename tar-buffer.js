@@ -17,6 +17,7 @@ var TarBuffer = module.exports = function TarBuffer(parser, opts) {
   opts = opts || {};
   this.log = opts.log || function () {};
   this.strip = +opts.strip || 0;
+  this.maxSize = +opts.maxSize || null;
 
   //
   // If we have an ignore, then configure it
@@ -45,6 +46,9 @@ TarBuffer.prototype.buffer = function () {
   this.parser.on('entry', function (e) {
     if (self.filter && self.filter(e.path)) {
       return self.log('ignore', e.props);
+    }
+    else if (self.maxSize && e.props.size > self.maxSize) {
+      return self.log('too big', e.props);
     }
 
     //
