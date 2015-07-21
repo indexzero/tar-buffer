@@ -16,6 +16,7 @@ var TarBuffer = module.exports = function TarBuffer(parser, opts) {
 
   opts = opts || {};
   this.log = opts.log || function () {};
+  this.strip = +opts.strip || 0;
 
   //
   // If we have an ignore, then configure it
@@ -44,6 +45,20 @@ TarBuffer.prototype.buffer = function () {
   this.parser.on('entry', function (e) {
     if (self.filter && self.filter(e.path)) {
       return self.log('ignore', e.props);
+    }
+
+    //
+    // If there is a number of segments to strip
+    // from the path, then strip them away.
+    //
+    if (self.strip) {
+      e.path = e.props.path = e.path
+        .split('/').slice(self.strip).join('/');
+
+      if (e.linkpath) {
+        e.linkpath = e.props.linkpath = e.linkpath
+          .split('/').slice(self.strip).join('/');
+      }
     }
 
     self.log('entry', e.props);
