@@ -1,6 +1,6 @@
 {
   "name": "tar-buffer",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Buffers entries from a tar.Parse() stream into memory",
   "main": "tar-buffer.js",
   "scripts": {
