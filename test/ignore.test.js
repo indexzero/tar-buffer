@@ -51,4 +51,27 @@ describe('tar-buffer ignore', function () {
       .on('error', context.onError)
       .pipe(context.parser);
   });
+
+  it('should properly ignore files above maxSize', function (done) {
+    var tarFile = path.join(fixturesDir, 'tar-buffer-0.0.0.tgz');
+    var context = helpers.createValidTarBuffer({
+      maxSize: 1500,
+      end: function onEnd(buffer) {
+        assert.deepEqual(Object.keys(buffer.files), [
+          'package/package.json',
+          'package/.npmignore',
+          'package/README.md',
+          'package/LICENSE',
+          'package/test/simple.test.js'
+        ]);
+
+        done();
+      }
+    });
+
+    fs.createReadStream(tarFile)
+      .pipe(zlib.Unzip())
+      .on('error', context.onError)
+      .pipe(context.parser);
+  });
 });
