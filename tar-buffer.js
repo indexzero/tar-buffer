@@ -2,7 +2,8 @@
 
 var events = require('events'),
     util = require('util'),
-    concat = require('concat-stream');
+    concat = require('concat-stream'),
+    ignore = require('ignore-file');
 
 /*
  * function TarBuffer (parser, opts)
@@ -13,14 +14,17 @@ var TarBuffer = module.exports = function TarBuffer(parser, opts) {
   if (!(this instanceof TarBuffer)) { return new TarBuffer(parser, opts); }
   events.EventEmitter.call(this);
 
-  //
-  // TODO: Need to support ignore options similar to `fstream-ignore`.
-  //
   opts = opts || {};
   this.log = opts.log || function () {};
+  this.strip = +opts.strip || 0;
+
+  //
+  // If we have an ignore, then configure it
+  //
+  this.filter = opts.ignore && ignore.compile(opts.ignore);
+
   this.parser = parser;
   this._buffering = 0;
-
   setImmediate(this.buffer.bind(this));
 };
 
@@ -39,6 +43,24 @@ TarBuffer.prototype.buffer = function () {
   //
   this.files = {};
   this.parser.on('entry', function (e) {
+    if (self.filter && self.filter(e.path)) {
+      return self.log('ignore', e.props);
+    }
+
+    //
+    // If there is a number of segments to strip
+    // from the path, then strip them away.
+    //
+    if (self.strip) {
+      e.path = e.props.path = e.path
+        .split('/').slice(self.strip).join('/');
+
+      if (e.linkpath) {
+        e.linkpath = e.props.linkpath = e.linkpath
+          .split('/').slice(self.strip).join('/');
+      }
+    }
+
     self.log('entry', e.props);
     if (!self.listeners('entry').length) {
       self.files[e.path] = e;

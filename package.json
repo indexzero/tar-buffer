@@ -23,7 +23,8 @@
   },
   "homepage": "https://github.com/indexzero/tar-buffer",
   "dependencies": {
-    "concat-stream": "~1.5.0"
+    "concat-stream": "~1.5.0",
+    "ignore-file": "^1.1.2"
   },
   "devDependencies": {
     "istanbul": "~0.3.17",
